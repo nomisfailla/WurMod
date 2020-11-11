@@ -2,8 +2,12 @@ package wurmod.mod;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.nio.file.FileSystemNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import wurmod.api.Wurm;
 
@@ -28,8 +32,8 @@ public class ModLoader {
 		for(File file : files) {
 			if(file.getName().endsWith(".jar")) {
 				ClientMod mod = loadMod(file);
-				mod.onInitialize();
 				
+				mod.onInitialize();
 				mods.add(mod);
 			}
 		}
@@ -42,12 +46,29 @@ public class ModLoader {
 			throw new ModException(new FileNotFoundException(file.getPath() + " does not exist"));
 		}
 		
-		// TODO: Get mod.yaml and parse it, to obtain the main class.
-		//       Could also iterate all classes and find one which inherits from ClientMod?
+		ModDescriptionFile desc = null;
+		
+		try {
+			JarFile jar = new JarFile(file);
+			JarEntry entry = jar.getJarEntry("mod.yml");
+			
+			if(entry == null) {
+				jar.close();
+				throw new ModException(new FileSystemNotFoundException("Mod jar does not contain mod.yml"));
+			}
+			
+			InputStream is = jar.getInputStream(entry);
+			desc = new ModDescriptionFile(is);
+			
+			is.close();
+			jar.close();
+		} catch(Exception e) {
+			throw new ModException(e);
+		}
 		
 		try {
 			ClassLoader loader = new ModClassLoader(game, file, getClass().getClassLoader());
-			Class<?> clazz = Class.forName("test.MyMod", true, loader);
+			Class<?> clazz = Class.forName(desc.getMain(), true, loader);
 			Class<? extends ClientMod> mod = clazz.asSubclass(ClientMod.class);
 			return mod.getDeclaredConstructor().newInstance();
 		} catch(Exception e) {

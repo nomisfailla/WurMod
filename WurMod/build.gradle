@@ -6,5 +6,15 @@ repositories {
     jcenter()
 }
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+task buildWurMod(type: Jar) {
+	baseName = project.name
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 dependencies {
+	compile group: 'org.yaml', name: 'snakeyaml', version: '1.27'
 }

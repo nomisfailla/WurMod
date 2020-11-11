@@ -1,5 +1,5 @@
 diff --git a/client/com/wurmonline/client/WurmClientBase.java b/client_patched/com/wurmonline/client/WurmClientBase.java
-index bb2f15f..ea8d0dc 100644
+index bb2f15f..569d725 100644
 --- a/client/com/wurmonline/client/WurmClientBase.java
 +++ b/client_patched/com/wurmonline/client/WurmClientBase.java
 @@ -79,6 +79,12 @@ import com.wurmonline.client.resources.Resources;
@@ -50,7 +50,7 @@ index bb2f15f..ea8d0dc 100644
 +        try {
 +            this.wurmImpl.setMods(this.modLoader.loadMods());
 +        } catch(ModException e) {
-+            // ...
++			System.out.println("Failed to load mod: " + e.getCause().getMessage());
 +        }
 +        // WurMod
 +
@@ -132,7 +132,7 @@ index 9a9d2f5..59ca07a 100644
      }
 diff --git a/client_patched/com/wurmonline/wurmod/WurmImpl.java b/client_patched/com/wurmonline/wurmod/WurmImpl.java
 new file mode 100644
-index 0000000..115cfc0
+index 0000000..6d2e438
 --- /dev/null
 +++ b/client_patched/com/wurmonline/wurmod/WurmImpl.java
 @@ -0,0 +1,35 @@
@@ -161,7 +161,7 @@ index 0000000..115cfc0
 +        CommandExecutor executor = commands.get(command);
 +
 +        if(executor != null) {
-+            return executor.execute(command);
++            return executor.onCommand(command);
 +        }
 +
 +        return false;
