@@ -18,7 +18,7 @@ In order to make it clear when looking at the patched code what parts have been 
 
 For example;
 ```java
-public void SomeConstructor() {
+public SomeConstructor() {
 	// WurMod: Optional description of what we are doing.
 	this.field = someValue;
 	this.field.call();
