@@ -1,6 +1,13 @@
 # WurMod
 Wurm Unlimited modding API and implementation.
 
+# Installation
+Manual installation is required currently, however, an automatic installer/updater is planned.
+1. Follow the steps below to generate patched `.java` files in the `out` directory.
+2. Open `client.jar` in the root of your Wurm installation and copy the contents of `out` into it.
+3. Open `wurmod.jar` and copy the `com` folder into it.
+4. Done.
+
 # Working With Patches
 For this you will need a Java compiler, [Apache Ant](https://ant.apache.org/), [Procyon v0.5.36](http://www.javadecompilers.com/) and git.
 1. Decompile `client.jar` and place the resulting directories into `Patches/client`.
