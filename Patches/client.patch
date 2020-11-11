@@ -1,0 +1,173 @@
+diff --git a/client/com/wurmonline/client/WurmClientBase.java b/client_patched/com/wurmonline/client/WurmClientBase.java
+index bb2f15f..ea8d0dc 100644
+--- a/client/com/wurmonline/client/WurmClientBase.java
++++ b/client_patched/com/wurmonline/client/WurmClientBase.java
+@@ -79,6 +79,12 @@ import com.wurmonline.client.resources.Resources;
+ import com.wurmonline.client.settings.Profile;
+ import java.util.logging.Logger;
+ 
++// WurMod
++import wurmod.mod.ModLoader;
++import wurmod.mod.ModException;
++import com.wurmonline.wurmod.WurmImpl;
++// WurMod
++
+ public final class WurmClientBase implements Runnable
+ {
+     private static Thread gameThread;
+@@ -114,10 +120,23 @@ public final class WurmClientBase implements Runnable
+     private static AtomicBoolean windowDirty;
+     public static SteamHandler steamHandler;
+     
++    // WurMod
++    private WurmImpl wurmImpl;
++    private ModLoader modLoader;
++    // WurMod
++
+     WurmClientBase() {
++        // WurMod
++        this.wurmImpl = new WurmImpl();
++        this.modLoader = new ModLoader(this.wurmImpl);
++        // WurMod
++
+         this.gameWindow = new LwjglClient();
+         this.world = new World(this);
+-        this.console = new WurmConsole(this.world);
++
++        // WurMod: Add wurmImpl parameter.
++        this.console = new WurmConsole(this.world, this.wurmImpl);
++
+         this.hud = new HeadsUpDisplay(this.world, this.console);
+         WurmClientBase.jobManager = JobManager.getInstance();
+         this.world.setHud(this.hud);
+@@ -195,6 +214,16 @@ public final class WurmClientBase implements Runnable
+         this.renderer = new WorldRender(this.world, this);
+         this.eventHandler.addListener(this.renderer.getItemPlacer());
+         this.eventHandler.addListener(this.renderer.getFishing());
++
++        // WurMod
++        this.nextStartupPhase("Loading mods...");
++        try {
++            this.wurmImpl.setMods(this.modLoader.loadMods());
++        } catch(ModException e) {
++            // ...
++        }
++        // WurMod
++
+         this.performFirstConnection();
+         this.console.executeAutorun();
+         WurmClientBase.soundEngine.setListener(this.world.getPlayer().getSoundListener());
+@@ -231,7 +260,9 @@ public final class WurmClientBase implements Runnable
+                 this.performConnection();
+                 continue;
+             }
+-            break;
++            // WurMod
++            // break;
++            // WurMod
+         }
+     }
+     
+diff --git a/client/com/wurmonline/client/console/WurmConsole.java b/client_patched/com/wurmonline/client/console/WurmConsole.java
+index 9a9d2f5..59ca07a 100644
+--- a/client/com/wurmonline/client/console/WurmConsole.java
++++ b/client_patched/com/wurmonline/client/console/WurmConsole.java
+@@ -61,6 +61,10 @@ import java.util.ArrayList;
+ import com.wurmonline.client.game.World;
+ import java.util.Map;
+ 
++// WurMod
++import com.wurmonline.wurmod.WurmImpl;
++// WurMod
++
+ public final class WurmConsole
+ {
+     private static final Map<String, String> legacyKeys;
+@@ -74,7 +78,12 @@ public final class WurmConsole
+     private ArrayList<CustomParticleEffect> testEffectList;
+     private boolean streamerMode;
+     
+-    public WurmConsole(final World aWorld) {
++    // WurMod
++    private WurmImpl wurmImpl;
++    // WurMod
++
++    // WurMod: Add WurmImpl parameter.
++    public WurmConsole(final World aWorld, WurmImpl wurmImpl) {
+         this.keyBinds = new HashMap<Integer, KeyBinding>();
+         this.temporaryKeyBinds = new HashMap<Integer, Short>();
+         this.testEffectList = null;
+@@ -88,6 +97,10 @@ public final class WurmConsole
+             }
+             this.executeKeybinds();
+         }
++
++        // WurMod
++        this.wurmImpl = wurmImpl;
++        // WurMod
+     }
+     
+     public void executeAutorun() {
+@@ -386,6 +399,10 @@ public final class WurmConsole
+             else if (cmd.equals("hidecollidables")) {
+                 this.world.getHud().showCollidables(false);
+             }
++            // WurMod
++            else if (wurmImpl.onCommand(cmd)) {
++            }
++            //WurMod
+             else if (!this.handleDevInput(cmd, data)) {
+                 System.out.println("Unknown command: " + cmd);
+             }
+@@ -1116,7 +1133,9 @@ public final class WurmConsole
+                         return false;
+                     }
+                 }
+-                break;
++                // WurMod
++                // break;
++                // WurMod
+             }
+         }
+     }
+diff --git a/client_patched/com/wurmonline/wurmod/WurmImpl.java b/client_patched/com/wurmonline/wurmod/WurmImpl.java
+new file mode 100644
+index 0000000..115cfc0
+--- /dev/null
++++ b/client_patched/com/wurmonline/wurmod/WurmImpl.java
+@@ -0,0 +1,35 @@
++package com.wurmonline.wurmod;
++
++import java.util.HashMap;
++
++import wurmod.api.Wurm;
++import wurmod.command.CommandExecutor;
++import wurmod.mod.ClientMod;
++
++public class WurmImpl implements Wurm {
++
++    private ClientMod[] mods = new ClientMod[0];
++    private HashMap<String, CommandExecutor> commands = new HashMap<String, CommandExecutor>();
++
++    public ClientMod[] getMods() {
++        return mods;
++    }
++
++    public void addConsoleCommand(String command, CommandExecutor executor) {
++		commands.put(command, executor);
++    }
++
++    public boolean onCommand(String command) {
++        CommandExecutor executor = commands.get(command);
++
++        if(executor != null) {
++            return executor.execute(command);
++        }
++
++        return false;
++    }
++
++    public void setMods(ClientMod[] mods) {
++        this.mods = mods;
++    }
++}

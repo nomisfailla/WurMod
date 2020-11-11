@@ -1,0 +1,6 @@
+client/
+client_patched/
+out/
+runtime/
+client.jar
+wurmod.jar

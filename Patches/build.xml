@@ -1,0 +1,6 @@
+<project default="compile">
+    <target name="compile">
+        <mkdir dir="out" />
+        <javac srcdir="client_patched" destdir="out" release="8" classpath="client.jar;wurmod.jar;runtime\lib\ext\jfxrt.jar" />
+    </target>
+</project>
